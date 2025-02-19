@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Scaper para Web</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f5f5f5;
+            }
+            .container {
+                background-color: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                margin-bottom: 20px;
+            }
+            .form-group {
+                margin-bottom: 20px;
+            }
+            input[type="url"],
+            input[type="text"] {
+                width: calc(100% - 22px); /* Ajuste para el padding */
+                padding: 10px;
+                margin-bottom: 10px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 16px;
+            }
+            button {
+                padding: 10px 20px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 16px;
+                transition: background-color 0.3s;
+            }
+            button:hover {
+                background-color: #0056b3;
+            }
+            #result {
+                margin-top: 20px;
+                background-color: #f8f9fa;
+                border-radius: 4px;
+                border: 1px solid #ddd;
+                overflow: auto; /* Permite scroll si el contenido es muy largo */
+                max-height: 600px; /* Altura máxima antes de mostrar scroll */
+            }
+            #result pre {
+                margin: 0;
+                padding: 15px;
+                white-space: pre-wrap; /* Mantiene el formato pero permite wrapping */
+                word-wrap: break-word; /* Evita que el texto se desborde horizontalmente */
+                font-family: monospace;
+                font-size: 14px;
+                line-height: 1.5;
+            }
+            .loading {
+                text-align: center;
+                padding: 20px;
+                color: #666;
+            }
+            .error-message {
+                color: #dc3545;
+                padding: 10px;
+                border-radius: 4px;
+                background-color: #f8d7da;
+                border: 1px solid #f5c6cb;
+                margin-top: 10px;
+            }
+            /* Estilizar la barra de desplazamiento */
+            #result::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+            #result::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 4px;
+            }
+            #result::-webkit-scrollbar-thumb {
+                background: #888;
+                border-radius: 4px;
+            }
+            #result::-webkit-scrollbar-thumb:hover {
+                background: #555;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Scraper Web</h1>
+            <p>
+                Ingresa la URL del sitio web que deseas analizar y opcionalmente
+                una palabra clave para filtrar los resultados.
+            </p>
+
+            <div class="form-group">
+                <input
+                    type="url"
+                    id="urlInput"
+                    placeholder="Ingresa la URL del sitio web (ej: https://www.ejemplo.com)"
+                    required
+                />
+                <input
+                    type="text"
+                    id="keywordInput"
+                    placeholder="Palabra clave para filtrar (opcional)"
+                />
+                <button onclick="scrapeUrl()">Analizar Sitio</button>
+            </div>
+        </div>
+
+        <!-- Contenedor separado para los resultados -->
+        <div class="container">
+            <div id="result"></div>
+        </div>
+
+        <script>
+            async function scrapeUrl() {
+                const urlInput = document.getElementById("urlInput");
+                const keywordInput = document.getElementById("keywordInput");
+                const resultDiv = document.getElementById("result");
+
+                // Validación básica de URL
+                if (!urlInput.value) {
+                    resultDiv.innerHTML =
+                        '<div class="error-message">Por favor, ingresa una URL válida</div>';
+                    return;
+                }
+
+                try {
+                    resultDiv.innerHTML =
+                        '<div class="loading">Analizando sitio web...</div>';
+
+                    const response = await fetch("/scrape", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            url: urlInput.value,
+                            keyword: keywordInput.value,
+                        }),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.error) {
+                        resultDiv.innerHTML = `<div class="error-message">Error: ${data.error}</div>`;
+                        return;
+                    }
+
+                    // Formatear y mostrar resultados
+                    const formattedData = JSON.stringify(data, null, 2);
+                    resultDiv.innerHTML = `<pre>${formattedData}</pre>`;
+                } catch (error) {
+                    resultDiv.innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
+                }
+            }
+        </script>
+    </body>
+</html>

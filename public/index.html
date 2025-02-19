@@ -1,0 +1,1122 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Web Scraper Universal</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@4/dark.css"
+            rel="stylesheet"
+        />
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: white;
+            }
+
+            .container {
+                background-color: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                margin-bottom: 20px;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            input[type="url"],
+            input[type="text"] {
+                width: calc(100% - 22px);
+                padding: 10px;
+                margin-bottom: 10px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 16px;
+            }
+
+            button {
+                padding: 10px 20px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 16px;
+                transition: background-color 0.3s;
+            }
+
+            button:hover {
+                background-color: #0056b3;
+            }
+
+            #result {
+                margin-top: 20px;
+                background-color: #f8f9fa;
+                border-radius: 4px;
+                border: 1px solid #ddd;
+                overflow: auto;
+                max-height: 600px;
+            }
+
+            #result pre {
+                margin: 0;
+                padding: 15px;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                font-family: monospace;
+                font-size: 14px;
+                line-height: 1.5;
+            }
+
+            .table-container {
+                margin-top: 20px;
+                overflow-x: auto;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 10px;
+                background-color: white;
+            }
+
+            th,
+            td {
+                padding: 12px;
+                text-align: left;
+                border: 1px solid #ddd;
+            }
+
+            th {
+                background-color: #007bff;
+                color: white;
+                position: sticky;
+                top: 0;
+            }
+
+            tr:nth-child(even) {
+                background-color: #f8f9fa;
+            }
+
+            tr:hover {
+                background-color: #f2f2f2;
+            }
+
+            .site-info {
+                margin-bottom: 10px;
+                padding: 10px;
+                background-color: #e9ecef;
+                border-radius: 4px;
+            }
+
+            .loading-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 20px;
+                flex-direction: column;
+            }
+
+            .spinner {
+                width: 50px;
+                height: 50px;
+                border: 5px solid #f3f3f3;
+                border-top: 5px solid #007bff;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-bottom: 15px;
+            }
+
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+
+            .hidden {
+                display: none !important;
+            }
+
+            .results-section {
+                display: none;
+            }
+
+            .results-section.visible {
+                display: block;
+                animation: fadeIn 0.5s ease-in;
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+                to {
+                    opacity: 1;
+                }
+            }
+
+            .popup-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.7);
+                z-index: 1000;
+                overflow-y: auto;
+            }
+
+            .popup-content {
+                position: relative;
+                width: 90%;
+                max-width: 800px;
+                margin: 40px auto;
+                background-color: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                animation: slideIn 0.3s ease-out;
+            }
+
+            @keyframes slideIn {
+                from {
+                    transform: translateY(-20px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+
+            .popup-close {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                font-size: 24px;
+                cursor: pointer;
+                color: #666;
+                background: none;
+                border: none;
+                padding: 5px;
+            }
+
+            .popup-close:hover {
+                color: #333;
+            }
+
+            .popup-header {
+                margin-bottom: 20px;
+            }
+
+            .popup-actions {
+                display: flex;
+                justify-content: flex-end;
+                margin-bottom: 15px;
+                margin-right: 30px;
+            }
+
+            .btn-rewrite {
+                padding: 8px 16px;
+                background-color: #314cdf;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+                transition: background-color 0.3s;
+            }
+
+            .btn-rewrite:hover {
+                background-color: #1b2871;
+            }
+
+            .popup-header h3 {
+                margin: 0;
+                color: #333;
+                padding-right: 30px;
+                font-size: 20px;
+                line-height: 1.4;
+            }
+
+            .popup-meta {
+                font-size: 14px;
+                color: #666;
+                margin: 10px 0;
+            }
+
+            .popup-content-text {
+                line-height: 1.6;
+                color: #333;
+                font-size: 16px;
+            }
+
+            .popup-content-text p {
+                margin-bottom: 15px;
+            }
+
+            .popup-images {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 20px;
+            }
+
+            .popup-images img {
+                max-width: 200px;
+                height: auto;
+                border-radius: 4px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                transition: transform 0.3s ease;
+            }
+
+            .popup-images img:hover {
+                transform: scale(1.05);
+            }
+
+            .error-message {
+                color: #dc3545;
+                background-color: #f8d7da;
+                border: 1px solid #f5c6cb;
+                padding: 15px;
+                border-radius: 4px;
+                margin: 10px 0;
+            }
+
+            .btn-ver-noticia {
+                background-color: #104a88;
+                color: white;
+                border: none;
+                padding: 8px 9px;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+                font-size: 11px;
+                text-transform: uppercase;
+            }
+
+            .btn-ver-noticia:hover {
+                background-color: #218838;
+            }
+
+            .ai-version {
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 2px solid #28a745;
+            }
+
+            .ai-version h4 {
+                color: #ff2929;
+                margin-bottom: 15px;
+                text-transform: uppercase;
+                font-size: 13px;
+            }
+
+            .loading-ai {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                color: #28a745;
+            }
+
+            .loading-ai .spinner {
+                border-color: #28a745;
+                border-right-color: transparent;
+            }
+
+            .version-separator {
+                text-align: center;
+                font-size: 14px;
+                color: #666;
+                margin: 30px 0 20px;
+                position: relative;
+            }
+            .version-separator:before,
+            .version-separator:after {
+                content: "";
+                position: absolute;
+                top: 50%;
+                width: 100px;
+                height: 1px;
+                background: #ddd;
+            }
+            .version-separator:before {
+                left: 20px;
+            }
+            .version-separator:after {
+                right: 20px;
+            }
+            .ai-version-content {
+                padding: 25px;
+                background-color: #f8f9fa;
+                border-radius: 8px;
+                border: 1px solid #e9ecef;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+                margin-bottom: 30px;
+            }
+            .ai-title {
+                color: #1a1a1a;
+                font-size: 28px;
+                font-weight: 700;
+                margin-bottom: 25px;
+                line-height: 1.4;
+                border-bottom: 2px solid #e9ecef;
+                padding-bottom: 15px;
+            }
+            .ai-text {
+                font-size: 16px;
+                line-height: 1.8;
+                color: #333;
+            }
+            .ai-text p {
+                margin-bottom: 18px;
+            }
+            .ai-text p:first-of-type {
+                font-size: 18px;
+                color: #1a1a1a;
+                line-height: 1.6;
+            }
+            .ai-version h3 {
+                display: none !important;
+            }
+            @media screen and (max-width: 768px) {
+                .container {
+                    padding: 15px;
+                }
+
+                input[type="url"],
+                input[type="text"] {
+                    width: calc(100% - 20px);
+                }
+
+                table {
+                    display: block;
+                    overflow-x: auto;
+                    white-space: nowrap;
+                }
+
+                .popup-content {
+                    width: 95%;
+                    margin: 20px auto;
+                }
+
+                .popup-images img {
+                    max-width: 100%;
+                }
+            }
+
+            #savedUrlsContainer {
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 1px solid #ddd;
+            }
+
+            #savedUrlsContainer h4 {
+                margin-bottom: 15px;
+                color: #333;
+            }
+
+            #savedUrlsTable {
+                width: 100%;
+                margin-top: 10px;
+            }
+
+            #savedUrlsTable td {
+                word-break: break-all;
+            }
+
+            #savedUrlsTable a {
+                color: #007bff;
+                text-decoration: none;
+            }
+
+            #savedUrlsTable a:hover {
+                text-decoration: underline;
+            }
+            .swal2-popup {
+                font-family: Arial, sans-serif;
+            }
+
+            .swal2-title {
+                font-size: 1.5em !important;
+                font-weight: 600 !important;
+            }
+
+            .swal2-content {
+                font-size: 1.1em !important;
+            }
+
+            .swal2-confirm {
+                font-weight: 500 !important;
+            }
+
+            .swal2-cancel {
+                font-weight: 500 !important;
+            }
+            .container.oculto {
+                display: none !important;
+            }
+            #jsonSection {
+                display: none !important;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container oculto">
+            <h3>THIEF UNIVERSAL</h3>
+            <p>
+                Ingresa la URL del sitio web que deseas analizar y opcionalmente
+                una palabra clave para filtrar los resultados.
+            </p>
+
+            <div class="form-group">
+                <input
+                    type="url"
+                    id="urlInput"
+                    placeholder="Ingresa la URL del sitio web (ej: https://www.ejemplo.com)"
+                    required
+                />
+                <input
+                    type="text"
+                    id="keywordInput"
+                    placeholder="Palabra clave para filtrar (opcional)"
+                />
+                <button onclick="scrapeUrl()">Analizar Sitio</button>
+            </div>
+        </div>
+
+        <div class="container" style="margin-top: 20px">
+            <h3>Guarda las URL que necesites scrapear</h3>
+            <div class="form-group">
+                <input
+                    type="text"
+                    id="urlToSave"
+                    placeholder="Ingresa la URL del sitio web que deseas analizar"
+                    style="margin-bottom: 10px"
+                />
+                <button onclick="saveUrl()">Guardar URL</button>
+            </div>
+
+            <!-- Nueva sección para mostrar las URLs guardadas -->
+            <div id="savedUrlsContainer" style="margin-top: 20px">
+                <h4>URL GUARDADAS EN LA BASE DE DATOS</h4>
+                <div class="table-container">
+                    <table id="savedUrlsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>URL</th>
+                                <th>ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="savedUrlsTableBody">
+                            <!-- Las URLs se cargarán aquí dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            async function loadSavedUrls() {
+                try {
+                    const response = await fetch(
+                        "https://baserow-production-83af.up.railway.app/api/database/rows/table/245/?user_field_names=true",
+                        {
+                            method: "GET",
+                            headers: {
+                                Authorization:
+                                    "Token CzYl5l6YtWEctWM5teeMuKUVgKRsZCoR",
+                            },
+                        },
+                    );
+
+                    if (!response.ok) {
+                        throw new Error("Error al cargar las URLs");
+                    }
+
+                    const data = await response.json();
+                    const tableBody =
+                        document.getElementById("savedUrlsTableBody");
+                    tableBody.innerHTML = ""; // Limpiar tabla existente
+
+                    data.results.forEach((item, index) => {
+                        const row = document.createElement("tr");
+                        const date = new Date(
+                            item.created_on,
+                        ).toLocaleDateString();
+
+                        row.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td><a href="${item.webLink}" target="_blank">${item.webLink}</a></td>
+                            <td>
+                                <button onclick="analizarWeb('${item.webLink}')" class="btn-ver-noticia" style="margin-right: 5px;">
+                                    Analizar Web
+                                </button>
+                                <button onclick="eliminarUrl(${item.id})" class="btn-ver-noticia" style="background-color: #dc3545;">
+                                    Eliminar
+                                </button>
+                            </td>
+                        `;
+
+                        tableBody.appendChild(row);
+                    });
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert("Error al cargar las URLs guardadas");
+                }
+            }
+            async function eliminarUrl(id) {
+                const result = await Swal.fire({
+                    title: "¿Estás seguro?",
+                    text: "Esta acción no se puede deshacer",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Sí, eliminar",
+                    cancelButtonText: "Cancelar",
+                });
+
+                if (result.isConfirmed) {
+                    try {
+                        const response = await fetch(
+                            `https://baserow-production-83af.up.railway.app/api/database/rows/table/245/${id}/?user_field_names=true`,
+                            {
+                                method: "DELETE",
+                                headers: {
+                                    Authorization:
+                                        "Token CzYl5l6YtWEctWM5teeMuKUVgKRsZCoR",
+                                },
+                            },
+                        );
+
+                        if (response.ok) {
+                            Swal.fire({
+                                title: "¡Eliminado!",
+                                text: "La URL ha sido eliminada exitosamente",
+                                icon: "success",
+                                confirmButtonColor: "#28a745",
+                            });
+                            loadSavedUrls();
+                        } else {
+                            throw new Error("Error al eliminar la URL");
+                        }
+                    } catch (error) {
+                        console.error("Error:", error);
+                        Swal.fire({
+                            title: "¡Error!",
+                            text: "Error al eliminar la URL",
+                            icon: "error",
+                            confirmButtonColor: "#dc3545",
+                        });
+                    }
+                }
+            }
+
+            function analizarWeb(url) {
+                document.getElementById("urlInput").value = url;
+                document.getElementById("keywordInput").value = "";
+                scrapeUrl();
+            }
+            async function saveUrl() {
+                const url = document.getElementById("urlToSave").value;
+
+                if (!url) {
+                    Swal.fire({
+                        title: "¡Error!",
+                        text: "Por favor ingresa una URL",
+                        icon: "error",
+                        confirmButtonColor: "#3085d6",
+                    });
+                    return;
+                }
+
+                try {
+                    const response = await fetch(
+                        "https://baserow-production-83af.up.railway.app/api/database/rows/table/245/?user_field_names=true",
+                        {
+                            method: "POST",
+                            headers: {
+                                Authorization:
+                                    "Token CzYl5l6YtWEctWM5teeMuKUVgKRsZCoR",
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                webLink: url,
+                            }),
+                        },
+                    );
+
+                    if (response.ok) {
+                        Swal.fire({
+                            title: "¡Éxito!",
+                            text: "URL guardada exitosamente",
+                            icon: "success",
+                            confirmButtonColor: "#28a745",
+                        });
+                        document.getElementById("urlToSave").value = "";
+                        loadSavedUrls();
+                    } else {
+                        throw new Error("Error al guardar en Baserow");
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    Swal.fire({
+                        title: "¡Error!",
+                        text: "Error al guardar la URL en Baserow",
+                        icon: "error",
+                        confirmButtonColor: "#dc3545",
+                    });
+                }
+            }
+
+            // Cargar las URLs cuando se carga la página
+            document.addEventListener("DOMContentLoaded", loadSavedUrls);
+        </script>
+
+        <div id="loadingContainer" class="container hidden">
+            <div class="loading-container">
+                <div class="spinner"></div>
+                <div>Analizando sitio web, por favor espere...</div>
+            </div>
+        </div>
+
+        <div id="jsonSection" class="container results-section">
+            <h2>Resultados JSON</h2>
+            <div id="result"></div>
+        </div>
+
+        <div id="tableSection" class="container results-section">
+            <h4>Resultados del Scraping</h4>
+            <div id="tableView"></div>
+        </div>
+
+        <div id="noticiaPopup" class="popup-overlay">
+            <div class="popup-content">
+                <button class="popup-close" onclick="closePopup()">
+                    &times;
+                </button>
+                <div id="popupContent"></div>
+            </div>
+        </div>
+
+        <script>
+            let activeUrl = null;
+
+            async function scrapeUrl() {
+                const urlInput = document.getElementById("urlInput");
+                const keywordInput = document.getElementById("keywordInput");
+                const loadingContainer =
+                    document.getElementById("loadingContainer");
+                const jsonSection = document.getElementById("jsonSection");
+                const tableSection = document.getElementById("tableSection");
+                const resultDiv = document.getElementById("result");
+                const tableDiv = document.getElementById("tableView");
+
+                if (!urlInput.value) {
+                    await Swal.fire({
+                        title: "¡Error!",
+                        text: "Por favor, ingresa una URL válida",
+                        icon: "error",
+                        confirmButtonColor: "#3085d6",
+                    });
+                    return;
+                }
+
+                try {
+                    // Mostrar loading con SweetAlert2
+                    Swal.fire({
+                        title: "Analizando sitio web",
+                        html: "Por favor espere...",
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        },
+                    });
+
+                    jsonSection.classList.remove("visible");
+                    tableSection.classList.remove("visible");
+                    loadingContainer.classList.remove("hidden");
+
+                    resultDiv.innerHTML = "";
+                    tableDiv.innerHTML = "";
+
+                    const response = await fetch("/scrape", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            url: urlInput.value,
+                            keyword: keywordInput.value,
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    loadingContainer.classList.add("hidden");
+
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    // Cerrar el loading de SweetAlert2
+                    Swal.close();
+
+                    const formattedData = JSON.stringify(data, null, 2);
+                    resultDiv.innerHTML = `<pre>${formattedData}</pre>`;
+
+                    let tableHTML = `
+                    <div class="site-info">
+                        <strong>Sitio:</strong> ${data.sitio}<br>
+                        <strong>Total de noticias:</strong> ${data.total_noticias}
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Título</th>
+                                    <th>Descripción</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    data.noticias.forEach((noticia, index) => {
+                        const urlSegura = noticia.enlace.replace(/["']/g, "");
+                        tableHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${noticia.titulo}</td>
+                            <td>${noticia.descripcion}</td>
+                            <td>
+                                <button onclick="verNoticia('${urlSegura}')" class="btn-ver-noticia">
+                                    Ver noticia
+                                </button>
+                            </td>
+                        </tr>
+                        `;
+                    });
+
+                    tableHTML += `
+                            </tbody>
+                        </table>
+                    </div>
+                    `;
+
+                    tableDiv.innerHTML = tableHTML;
+
+                    setTimeout(() => {
+                        jsonSection.classList.add("visible");
+                        tableSection.classList.add("visible");
+                    }, 100);
+
+                    // Mostrar mensaje de éxito
+                    await Swal.fire({
+                        title: "¡Análisis completado!",
+                        text: `Se encontraron ${data.total_noticias} noticias`,
+                        icon: "success",
+                        confirmButtonColor: "#28a745",
+                    });
+                } catch (error) {
+                    loadingContainer.classList.add("hidden");
+                    await Swal.fire({
+                        title: "¡Error!",
+                        text: `Error: ${error.message}`,
+                        icon: "error",
+                        confirmButtonColor: "#dc3545",
+                    });
+                }
+            }
+
+            async function verNoticia(url) {
+                if (activeUrl === url) {
+                    return;
+                }
+
+                try {
+                    activeUrl = url;
+                    const popup = document.getElementById("noticiaPopup");
+                    const popupContent =
+                        document.getElementById("popupContent");
+
+                    popup.style.display = "block";
+                    popupContent.innerHTML = `
+                    <div class="loading-container">
+                        <div class="spinner"></div>
+                        <div>Cargando noticia...</div>
+                    </div>
+                `;
+
+                    const response = await fetch("/scrape-single", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ url }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(
+                            `Error al cargar la noticia (${response.status})`,
+                        );
+                    }
+
+                    const data = await response.json();
+
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    popupContent.innerHTML = `
+                    <div class="popup-actions">
+                        <button class="btn-rewrite" onclick="reescribirConIA()">Reescribir con IA</button>
+                    </div>
+                    <div class="popup-header">
+                        <h3>${data.titulo}</h3>
+                        <div class="popup-meta">
+                            ${data.fecha ? `<div>Fecha: ${data.fecha}</div>` : ""}
+                            ${data.autor ? `<div>Autor: ${data.autor}</div>` : ""}
+                            <div>URL: <a href="${data.url}" target="_blank">${data.url}</a></div>
+                        </div>
+                    </div>
+                    <div class="popup-content-text">
+                        ${data.contenido
+                            .split("\n\n")
+                            .map((p) => `<p>${p}</p>`)
+                            .join("")}
+                    </div>
+                    ${
+                        data.imagenes && data.imagenes.length > 0
+                            ? `
+                        <div class="popup-images">
+                            ${data.imagenes
+                                .map(
+                                    (src) => `
+                                <img src="${src}"
+                                     alt="Imagen de la noticia"
+                                     onerror="this.style.display='none'"
+                                     loading="lazy">
+                            `,
+                                )
+                                .join("")}
+                        </div>
+                    `
+                            : ""
+                    }
+                `;
+                } catch (error) {
+                    console.error("Error al cargar la noticia:", error);
+                    popupContent.innerHTML = `
+                    <div class="error-message">
+                        <h3>Error al cargar la noticia</h3>
+                        <p>${error.message}</p>
+                        <p>URL: ${url}</p>
+                        <button onclick="reintentarCarga('${url}')" class="btn-ver-noticia">
+                            Reintentar
+                        </button>
+                    </div>
+                `;
+                } finally {
+                    activeUrl = null;
+                }
+            }
+
+            async function reescribirConIA() {
+                try {
+                    const titulo =
+                        document.querySelector(".popup-header h3").textContent;
+                    const contenido = Array.from(
+                        document.querySelectorAll(".popup-content-text p")
+                    )
+                        .map((p) => p.textContent)
+                        .join("\n\n");
+
+                    // Validar que tenemos contenido para enviar
+                    if (!titulo || !contenido) {
+                        throw new Error(
+                            "No se pudo obtener el contenido de la noticia"
+                        );
+                    }
+
+                    // Mostrar loading
+                    const aiVersionDiv = document.createElement("div");
+                    aiVersionDiv.className = "ai-version";
+                    aiVersionDiv.innerHTML = `
+                        <div class="loading-ai">
+                            <div class="spinner"></div>
+                            <div>Reescribiendo con IA...</div>
+                        </div>
+                    `;
+                    document
+                        .querySelector(".popup-content-text")
+                        .insertAdjacentElement("afterend", aiVersionDiv);
+
+                    const apiUrl =
+                        window.location.protocol +
+                        "//" +
+                        window.location.host +
+                        "/rewrite-with-ai";
+                    console.log("Intentando conectar a:", apiUrl);
+
+                    const requestData = {
+                        titulo: titulo.trim(),
+                        contenido: contenido.trim(),
+                    };
+                    console.log("Datos a enviar:", requestData);
+
+                    const response = await fetch(apiUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Accept: "application/json",
+                        },
+                        body: JSON.stringify(requestData),
+                    });
+
+                    console.log("Respuesta recibida:", {
+                        status: response.status,
+                        statusText: response.statusText,
+                        headers: Object.fromEntries(response.headers),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.text();
+                        console.error("Error del servidor:", {
+                            status: response.status,
+                            statusText: response.statusText,
+                            error: errorData,
+                        });
+                        throw new Error(`Error al reescribir la noticia\n\n${errorData}`);
+                    }
+
+                    const data = await response.json();
+                    console.log("Datos recibidos:", data);
+
+                    if (!data.titulo || !data.contenido) {
+                        throw new Error("La respuesta no contiene el formato esperado");
+                    }
+
+                    // Actualizar el contenido
+                    aiVersionDiv.innerHTML = `
+                        <h3 class="ai-title">Versión reescrita con IA:</h3>
+                        <div class="ai-content">
+                            <h4>${data.titulo}</h4>
+                            ${data.contenido
+                                .split("\n\n")
+                                .map((p) => `<p>${p}</p>`)
+                                .join("")}
+                        </div>
+                    `;
+
+                    // Agregar estilos para mejorar la legibilidad
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        .ai-content {
+                            margin-top: 20px;
+                            line-height: 1.6;
+                            font-size: 16px;
+                            color: #2c3e50;
+                        }
+                        .ai-content p {
+                            margin-bottom: 1.5em;
+                            text-align: justify;
+                            padding: 0 10px;
+                        }
+                        .ai-content h4 {
+                            margin: 1.5em 0;
+                            font-size: 1.4em;
+                            color: #2c3e50;
+                            text-align: center;
+                            font-weight: bold;
+                        }
+                        .ai-content h5 {
+                            margin: 1.2em 0;
+                            font-size: 1.1em;
+                            color: #34495e;
+                            font-weight: bold;
+                        }
+                    `;
+                    document.head.appendChild(style);
+                } catch (error) {
+                    console.error("Error completo:", error);
+                    const aiVersionDiv =
+                        document.querySelector(".ai-version") ||
+                        document.createElement("div");
+                    aiVersionDiv.className = "ai-version";
+                    aiVersionDiv.innerHTML = `
+                        <div class="error-message" style="padding: 20px; background-color: #fff3f3; border: 1px solid #ffcdd2; border-radius: 4px; margin: 10px 0;">
+                            <h4 style="color: #d32f2f; margin: 0 0 10px 0;">Error al reescribir la noticia</h4>
+                            <p style="margin: 0 0 10px 0;">Lo sentimos, hubo un error al procesar la solicitud: ${error.message}</p>
+                            <button onclick="reescribirConIA()" class="btn-rewrite" style="background-color: #d32f2f; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                                Intentar nuevamente
+                            </button>
+                        </div>
+                    `;
+                    if (!document.querySelector(".ai-version")) {
+                        document
+                            .querySelector(".popup-content-text")
+                            .insertAdjacentElement("afterend", aiVersionDiv);
+                    }
+                }
+            }
+
+            function reintentarCarga(url) {
+                verNoticia(url);
+            }
+
+            function closePopup() {
+                const popup = document.getElementById("noticiaPopup");
+                popup.style.display = "none";
+                document.getElementById("popupContent").innerHTML = "";
+                activeUrl = null;
+            }
+
+            document
+                .getElementById("noticiaPopup")
+                .addEventListener("click", function (e) {
+                    if (e.target === this) {
+                        closePopup();
+                    }
+                });
+
+            document.addEventListener("keydown", function (e) {
+                if (
+                    e.key === "Escape" &&
+                    document.getElementById("noticiaPopup").style.display ===
+                        "block"
+                ) {
+                    closePopup();
+                }
+            });
+
+            document.addEventListener("DOMContentLoaded", () => {
+                const jsonSection = document.getElementById("jsonSection");
+                const tableSection = document.getElementById("tableSection");
+                const loadingContainer =
+                    document.getElementById("loadingContainer");
+
+                jsonSection.classList.remove("visible");
+                tableSection.classList.remove("visible");
+                loadingContainer.classList.add("hidden");
+            });
+        </script>
+    </body>
+</html>

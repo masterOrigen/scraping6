@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Web Scraper Universal</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f5f5f5;
+            }
+
+            .container {
+                background-color: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                margin-bottom: 20px;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            input[type="url"],
+            input[type="text"] {
+                width: calc(100% - 22px);
+                padding: 10px;
+                margin-bottom: 10px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 16px;
+            }
+
+            button {
+                padding: 10px 20px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 16px;
+                transition: background-color 0.3s;
+            }
+
+            button:hover {
+                background-color: #0056b3;
+            }
+
+            #result {
+                margin-top: 20px;
+                background-color: #f8f9fa;
+                border-radius: 4px;
+                border: 1px solid #ddd;
+                overflow: auto;
+                max-height: 600px;
+            }
+
+            #result pre {
+                margin: 0;
+                padding: 15px;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                font-family: monospace;
+                font-size: 14px;
+                line-height: 1.5;
+            }
+
+            .table-container {
+                margin-top: 20px;
+                overflow-x: auto;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 10px;
+                background-color: white;
+            }
+
+            th,
+            td {
+                padding: 12px;
+                text-align: left;
+                border: 1px solid #ddd;
+            }
+
+            th {
+                background-color: #007bff;
+                color: white;
+                position: sticky;
+                top: 0;
+            }
+
+            tr:nth-child(even) {
+                background-color: #f8f9fa;
+            }
+
+            tr:hover {
+                background-color: #f2f2f2;
+            }
+
+            .site-info {
+                margin-bottom: 10px;
+                padding: 10px;
+                background-color: #e9ecef;
+                border-radius: 4px;
+            }
+
+            .loading-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 20px;
+                flex-direction: column;
+            }
+
+            .spinner {
+                width: 50px;
+                height: 50px;
+                border: 5px solid #f3f3f3;
+                border-top: 5px solid #007bff;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-bottom: 15px;
+            }
+
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+
+            .hidden {
+                display: none !important;
+            }
+
+            .results-section {
+                display: none;
+            }
+
+            .results-section.visible {
+                display: block;
+                animation: fadeIn 0.5s ease-in;
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+                to {
+                    opacity: 1;
+                }
+            }
+
+            .popup-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.7);
+                z-index: 1000;
+                overflow-y: auto;
+            }
+
+            .popup-content {
+                position: relative;
+                width: 90%;
+                max-width: 800px;
+                margin: 40px auto;
+                background-color: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                animation: slideIn 0.3s ease-out;
+            }
+
+            @keyframes slideIn {
+                from {
+                    transform: translateY(-20px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+
+            .popup-close {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                font-size: 24px;
+                cursor: pointer;
+                color: #666;
+                background: none;
+                border: none;
+                padding: 5px;
+            }
+
+            .popup-close:hover {
+                color: #333;
+            }
+
+            .popup-header {
+                margin-bottom: 20px;
+                padding-bottom: 10px;
+                border-bottom: 1px solid #ddd;
+            }
+
+            .popup-header h3 {
+                margin: 0;
+                color: #333;
+                padding-right: 30px;
+                font-size: 20px;
+                line-height: 1.4;
+            }
+
+            .popup-meta {
+                font-size: 14px;
+                color: #666;
+                margin: 10px 0;
+            }
+
+            .popup-content-text {
+                line-height: 1.6;
+                color: #333;
+                font-size: 16px;
+            }
+
+            .popup-content-text p {
+                margin-bottom: 15px;
+            }
+
+            .popup-images {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 20px;
+            }
+
+            .popup-images img {
+                max-width: 200px;
+                height: auto;
+                border-radius: 4px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                transition: transform 0.3s ease;
+            }
+
+            .popup-images img:hover {
+                transform: scale(1.05);
+            }
+
+            .error-message {
+                color: #dc3545;
+                background-color: #f8d7da;
+                border: 1px solid #f5c6cb;
+                padding: 15px;
+                border-radius: 4px;
+                margin: 10px 0;
+            }
+
+            .btn-ver-noticia {
+                background-color: #28a745;
+                color: white;
+                border: none;
+                padding: 8px 15px;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+
+            .btn-ver-noticia:hover {
+                background-color: #218838;
+            }
+
+            @media screen and (max-width: 768px) {
+                .container {
+                    padding: 15px;
+                }
+
+                input[type="url"],
+                input[type="text"] {
+                    width: calc(100% - 20px);
+                }
+
+                table {
+                    display: block;
+                    overflow-x: auto;
+                    white-space: nowrap;
+                }
+
+                .popup-content {
+                    width: 95%;
+                    margin: 20px auto;
+                }
+
+                .popup-images img {
+                    max-width: 100%;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Web Scraper Universal</h1>
+            <p>
+                Ingresa la URL del sitio web que deseas analizar y opcionalmente
+                una palabra clave para filtrar los resultados.
+            </p>
+
+            <div class="form-group">
+                <input
+                    type="url"
+                    id="urlInput"
+                    placeholder="Ingresa la URL del sitio web (ej: https://www.ejemplo.com)"
+                    required
+                />
+                <input
+                    type="text"
+                    id="keywordInput"
+                    placeholder="Palabra clave para filtrar (opcional)"
+                />
+                <button onclick="scrapeUrl()">Analizar Sitio</button>
+            </div>
+        </div>
+
+        <div id="loadingContainer" class="container hidden">
+            <div class="loading-container">
+                <div class="spinner"></div>
+                <div>Analizando sitio web, por favor espere...</div>
+            </div>
+        </div>
+
+        <div id="jsonSection" class="container results-section">
+            <h2>Resultados JSON</h2>
+            <div id="result"></div>
+        </div>
+
+        <div id="tableSection" class="container results-section">
+            <h2>Resultados en Tabla</h2>
+            <div id="tableView"></div>
+        </div>
+
+        <div id="noticiaPopup" class="popup-overlay">
+            <div class="popup-content">
+                <button class="popup-close" onclick="closePopup()">
+                    &times;
+                </button>
+                <div id="popupContent"></div>
+            </div>
+        </div>
+
+        <script>
+            let activeUrl = null;
+
+            async function scrapeUrl() {
+                const urlInput = document.getElementById("urlInput");
+                const keywordInput = document.getElementById("keywordInput");
+                const loadingContainer =
+                    document.getElementById("loadingContainer");
+                const jsonSection = document.getElementById("jsonSection");
+                const tableSection = document.getElementById("tableSection");
+                const resultDiv = document.getElementById("result");
+                const tableDiv = document.getElementById("tableView");
+
+                if (!urlInput.value) {
+                    alert("Por favor, ingresa una URL válida");
+                    return;
+                }
+
+                try {
+                    jsonSection.classList.remove("visible");
+                    tableSection.classList.remove("visible");
+                    loadingContainer.classList.remove("hidden");
+
+                    resultDiv.innerHTML = "";
+                    tableDiv.innerHTML = "";
+
+                    const response = await fetch("/scrape", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            url: urlInput.value,
+                            keyword: keywordInput.value,
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    loadingContainer.classList.add("hidden");
+
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    const formattedData = JSON.stringify(data, null, 2);
+                    resultDiv.innerHTML = `<pre>${formattedData}</pre>`;
+
+                    let tableHTML = `
+                    <div class="site-info">
+                        <strong>Sitio:</strong> ${data.sitio}<br>
+                        <strong>Total de noticias:</strong> ${data.total_noticias}
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Título</th>
+                                    <th>Descripción</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                    data.noticias.forEach((noticia, index) => {
+                        const urlSegura = noticia.enlace.replace(/["']/g, "");
+                        tableHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${noticia.titulo}</td>
+                            <td>${noticia.descripcion}</td>
+                            <td>
+                                <button onclick="verNoticia('${urlSegura}')" class="btn-ver-noticia">
+                                    Ver noticia
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    });
+
+                    tableHTML += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                    tableDiv.innerHTML = tableHTML;
+
+                    setTimeout(() => {
+                        jsonSection.classList.add("visible");
+                        tableSection.classList.add("visible");
+                    }, 100);
+                } catch (error) {
+                    loadingContainer.classList.add("hidden");
+                    alert(`Error: ${error.message}`);
+                }
+            }
+
+            async function verNoticia(url) {
+                if (activeUrl === url) {
+                    return;
+                }
+
+                try {
+                    activeUrl = url;
+                    const popup = document.getElementById("noticiaPopup");
+                    const popupContent =
+                        document.getElementById("popupContent");
+
+                    popup.style.display = "block";
+                    popupContent.innerHTML = `
+                    <div class="loading-container">
+                        <div class="spinner"></div>
+                        <div>Cargando noticia...</div>
+                    </div>
+                `;
+
+                    const response = await fetch("/scrape-single", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ url }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(
+                            `Error al cargar la noticia (${response.status})`,
+                        );
+                    }
+
+                    const data = await response.json();
+
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    popupContent.innerHTML = `
+                    <div class="popup-header">
+                        <h3>${data.titulo}</h3>
+                        <div class="popup-meta">
+                            ${data.fecha ? `<div>Fecha: ${data.fecha}</div>` : ""}
+                            ${data.autor ? `<div>Autor: ${data.autor}</div>` : ""}
+                            <div>URL: <a href="${data.url}" target="_blank">${data.url}</a></div>
+                        </div>
+                    </div>
+                    <div class="popup-content-text">
+                        ${data.contenido
+                            .split("\n\n")
+                            .map((p) => `<p>${p}</p>`)
+                            .join("")}
+                    </div>
+                    ${
+                        data.imagenes && data.imagenes.length > 0
+                            ? `
+                        <div class="popup-images">
+                            ${data.imagenes
+                                .map(
+                                    (src) => `
+                                <img src="${src}"
+                                     alt="Imagen de la noticia"
+                                     onerror="this.style.display='none'"
+                                     loading="lazy">
+                            `,
+                                )
+                                .join("")}
+                        </div>
+                    `
+                            : ""
+                    }
+                `;
+                } catch (error) {
+                    console.error("Error al cargar la noticia:", error);
+                    popupContent.innerHTML = `
+                    <div class="error-message">
+                        <h3>Error al cargar la noticia</h3>
+                        <p>${error.message}</p>
+                        <p>URL: ${url}</p>
+                        <button onclick="reintentarCarga('${url}')" class="btn-ver-noticia">
+                            Reintentar
+                        </button>
+                    </div>
+                `;
+                } finally {
+                    activeUrl = null;
+                }
+            }
+
+            function reintentarCarga(url) {
+                verNoticia(url);
+            }
+
+            function closePopup() {
+                const popup = document.getElementById("noticiaPopup");
+                popup.style.display = "none";
+                document.getElementById("popupContent").innerHTML = "";
+                activeUrl = null;
+            }
+
+            document
+                .getElementById("noticiaPopup")
+                .addEventListener("click", function (e) {
+                    if (e.target === this) {
+                        closePopup();
+                    }
+                });
+
+            document.addEventListener("keydown", function (e) {
+                if (
+                    e.key === "Escape" &&
+                    document.getElementById("noticiaPopup").style.display ===
+                        "block"
+                ) {
+                    closePopup();
+                }
+            });
+
+            document.addEventListener("DOMContentLoaded", () => {
+                const jsonSection = document.getElementById("jsonSection");
+                const tableSection = document.getElementById("tableSection");
+                const loadingContainer =
+                    document.getElementById("loadingContainer");
+
+                jsonSection.classList.remove("visible");
+                tableSection.classList.remove("visible");
+                loadingContainer.classList.add("hidden");
+            });
+        </script>
+    </body>
+</html>
